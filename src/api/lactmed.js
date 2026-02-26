@@ -1,4 +1,5 @@
 const EUTILS_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
+const API_KEY = import.meta.env.VITE_NCBI_API_KEY;
 
 export async function searchDrugs(query, signal) {
   if (!query.trim()) return [];
@@ -10,6 +11,7 @@ export async function searchDrugs(query, signal) {
     term: searchTerm,
     retmode: 'json',
     retmax: '20',
+    ...(API_KEY && { api_key: API_KEY }),
   });
 
   const searchRes = await fetch(`${EUTILS_BASE}/esearch.fcgi?${searchParams}`, { signal });
@@ -24,6 +26,7 @@ export async function searchDrugs(query, signal) {
     dbfrom: 'books',
     db: 'pubmed',
     retmode: 'json',
+    ...(API_KEY && { api_key: API_KEY }),
   });
   uids.forEach(id => linkParams.append('id', id));
 
@@ -47,6 +50,7 @@ export async function searchDrugs(query, signal) {
   const fetchParams = new URLSearchParams({
     db: 'pubmed',
     retmode: 'xml',
+    ...(API_KEY && { api_key: API_KEY }),
   });
   pmids.forEach(id => fetchParams.append('id', id));
 
