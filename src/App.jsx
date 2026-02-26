@@ -3,11 +3,39 @@ import SearchBar from './components/SearchBar';
 import DrugCard from './components/DrugCard';
 import BrandBadge from './components/BrandBadge';
 import Disclaimer from './components/Disclaimer';
+import HomePage from './components/HomePage';
 import { searchDrugs } from './api/lactmed';
 import { resolveBrand } from './api/brandResolver';
 
+function getUrlDrug() {
+  return new URLSearchParams(window.location.search).get('drug') || '';
+}
+
+function pushDrug(title) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('drug', title);
+  history.pushState(null, '', url);
+}
+
+function replaceDrug(title) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('drug', title);
+  history.replaceState(null, '', url);
+}
+
+function clearDrugParam(push) {
+  const url = new URL(window.location.href);
+  url.searchParams.delete('drug');
+  const href = url.searchParams.toString() ? url.toString() : url.pathname;
+  if (push) {
+    history.pushState(null, '', href);
+  } else {
+    history.replaceState(null, '', href);
+  }
+}
+
 function App() {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(() => getUrlDrug());
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -17,6 +45,7 @@ function App() {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const debounceRef = useRef(null);
   const abortRef = useRef(null);
+  const isDeepLink = useRef(!!getUrlDrug());
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
@@ -39,13 +68,16 @@ function App() {
       return;
     }
 
-    // Show loading immediately so "No results found" doesn't flash during debounce
     setLoading(true);
     setResults([]);
     setError(null);
     setSearched(false);
     setCorrection(null);
     setSelectedIndex(null);
+
+    const delay = isDeepLink.current ? 0 : 350;
+    const deepLinkDrug = isDeepLink.current ? getUrlDrug() : null;
+    isDeepLink.current = false;
 
     debounceRef.current = setTimeout(async () => {
       abortRef.current?.abort();
@@ -60,6 +92,21 @@ function App() {
         setResults(data);
         setCorrection(corrected);
         setSearched(true);
+
+        // Deep link auto-select: if came from URL and an exact match exists, select it
+        if (deepLinkDrug && data.length > 1) {
+          const exactIdx = data.findIndex(
+            (d) => d.title.toLowerCase() === deepLinkDrug.toLowerCase()
+          );
+          if (exactIdx !== -1) {
+            setSelectedIndex(exactIdx);
+          }
+        }
+
+        // Single result: update URL without creating a history entry
+        if (data.length === 1) {
+          replaceDrug(data[0].title);
+        }
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.error('Search error:', err);
@@ -68,14 +115,63 @@ function App() {
       } finally {
         setLoading(false);
       }
-    }, 350);
+    }, delay);
 
     return () => clearTimeout(debounceRef.current);
   }, [query]);
 
+  // Handle browser back/forward
+  useEffect(() => {
+    function handlePopState() {
+      const drug = getUrlDrug();
+      if (!drug) {
+        setQuery('');
+        setSelectedIndex(null);
+        return;
+      }
+
+      // If we already have results, try to find the drug in current results
+      setQuery(drug);
+      if (results.length > 0) {
+        const idx = results.findIndex(
+          (d) => d.title.toLowerCase() === drug.toLowerCase()
+        );
+        setSelectedIndex(idx !== -1 ? idx : null);
+      } else {
+        // Need a fresh search
+        isDeepLink.current = true;
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [results]);
+
+  function handleDrugSelect(name) {
+    isDeepLink.current = true;
+    setQuery(name);
+  }
+
+  function handleResultTap(i) {
+    setSelectedIndex(i);
+    pushDrug(results[i].title);
+  }
+
+  function handleBackToList() {
+    setSelectedIndex(null);
+    clearDrugParam(true);
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
-      <SearchBar query={query} onChange={setQuery} />
+      <SearchBar query={query} onChange={(val) => {
+        setQuery(val);
+        if (!val.trim()) clearDrugParam(false);
+      }} onHomeClick={() => {
+        setQuery('');
+        setSelectedIndex(null);
+        clearDrugParam(false);
+      }} />
 
       <main className="mx-auto max-w-lg px-4 py-4">
         {resolution && (
@@ -115,9 +211,10 @@ function App() {
         )}
 
         {!loading && !error && !query.trim() && (
-          <p className="py-12 text-center text-sm text-slate-400">
-            Enter a drug or brand name to check breastfeeding safety info.
-          </p>
+          <>
+            <HomePage onDrugSelect={handleDrugSelect} />
+            <Disclaimer />
+          </>
         )}
 
         {results.length === 1 && (
@@ -132,7 +229,7 @@ function App() {
             {results.map((drug, i) => (
               <button
                 key={drug.title || i}
-                onClick={() => setSelectedIndex(i)}
+                onClick={() => handleResultTap(i)}
                 className="w-full rounded-xl bg-white px-4 py-3 text-left text-sm font-medium text-slate-800 shadow-sm active:bg-slate-50"
               >
                 {drug.title}
@@ -144,7 +241,7 @@ function App() {
         {results.length > 1 && selectedIndex !== null && (
           <div>
             <button
-              onClick={() => setSelectedIndex(null)}
+              onClick={handleBackToList}
               className="mb-3 flex items-center gap-1 text-sm font-medium text-blue-600 active:text-blue-800"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

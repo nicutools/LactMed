@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { fetchMonograph } from '../api/monograph';
+import ShareButton from './ShareButton';
 
 const SECTIONS = [
   { key: 'drugLevels', label: 'Drug Levels' },
@@ -127,16 +128,19 @@ export default function DrugCard({ drug }) {
         </div>
       )}
 
-      {drug.bookshelfId && (
-        <a
-          href={`https://www.ncbi.nlm.nih.gov/books/${drug.bookshelfId}/`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-block text-sm font-medium text-blue-600 hover:text-blue-800"
-        >
-          View full monograph &rarr;
-        </a>
-      )}
+      <div className="mt-4 flex items-center justify-between">
+        {drug.bookshelfId && (
+          <a
+            href={`https://www.ncbi.nlm.nih.gov/books/${drug.bookshelfId}/`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-blue-600 hover:text-blue-800"
+          >
+            View full monograph &rarr;
+          </a>
+        )}
+        <ShareButton drugTitle={drug.title} />
+      </div>
     </article>
   );
 }

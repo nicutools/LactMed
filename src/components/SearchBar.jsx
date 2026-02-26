@@ -1,7 +1,12 @@
-export default function SearchBar({ query, onChange }) {
+export default function SearchBar({ query, onChange, onHomeClick }) {
   return (
     <div className="sticky top-0 z-10 bg-white px-4 pt-6 pb-4 shadow-sm">
-      <h1 className="text-2xl font-bold text-slate-800 mb-1">LactCheck</h1>
+      <h1
+        className="text-2xl font-bold text-slate-800 mb-1 cursor-pointer w-fit"
+        onClick={onHomeClick}
+      >
+        LactCheck
+      </h1>
       <p className="text-sm text-slate-500 mb-3">
         Drug safety info for breastfeeding
       </p>
