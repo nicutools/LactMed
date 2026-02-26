@@ -1,13 +1,13 @@
 export default function Disclaimer() {
   return (
-    <footer className="px-4 py-6 text-center text-xs leading-relaxed text-slate-400">
+    <footer className="px-4 py-6 text-center text-xs leading-relaxed text-zinc-400">
       <p>
         Data provided by the{' '}
         <a
           href="https://www.ncbi.nlm.nih.gov/books/NBK501922/"
           target="_blank"
           rel="noopener noreferrer"
-          className="underline hover:text-slate-600"
+          className="underline hover:text-zinc-600"
         >
           LactMed® database
         </a>{' '}

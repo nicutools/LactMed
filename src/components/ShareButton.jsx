@@ -29,7 +29,7 @@ export default function ShareButton({ drugTitle }) {
   return (
     <button
       onClick={handleShare}
-      className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800 active:text-blue-800"
+      className="inline-flex items-center gap-1 text-sm font-medium text-sky-600 hover:text-sky-800 active:text-sky-800"
     >
       {copied ? (
         <>
