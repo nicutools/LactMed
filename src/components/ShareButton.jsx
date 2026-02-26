@@ -10,7 +10,7 @@ export default function ShareButton({ drugTitle }) {
 
     if (navigator.share) {
       try {
-        await navigator.share({ title: `${drugTitle} — LactCheck`, url: shareUrl });
+        await navigator.share({ title: `${drugTitle} — Lactia`, url: shareUrl });
         return;
       } catch (err) {
         if (err.name === 'AbortError') return;
@@ -29,7 +29,7 @@ export default function ShareButton({ drugTitle }) {
   return (
     <button
       onClick={handleShare}
-      className="inline-flex items-center gap-1 text-sm font-medium text-sky-600 hover:text-sky-800 active:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300"
+      className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-teal-600 hover:text-teal-800 active:text-teal-800 dark:text-teal-400 dark:hover:text-teal-300"
     >
       {copied ? (
         <>
