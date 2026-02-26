@@ -9,7 +9,7 @@ export default function SearchBar({ query, onChange, onHomeClick }) {
             className="mb-1 cursor-pointer w-fit"
             onClick={onHomeClick}
           >
-            <img src="/logo.png" alt="Lactia" className="h-10 dark:invert dark:hue-rotate-180" />
+            <img src="/logo.png" alt="Lactia" className="h-20 dark:invert dark:hue-rotate-180" />
           </h1>
           <p className="text-sm text-slate-500 mb-3 dark:text-slate-400">
             Medication guidance for breastfeeding mothers
