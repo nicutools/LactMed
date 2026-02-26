@@ -6,11 +6,10 @@ export default function SearchBar({ query, onChange, onHomeClick }) {
       <div className="flex items-start justify-between">
         <div>
           <h1
-            className="flex items-center gap-2 text-2xl font-bold tracking-tight text-sky-900 mb-1 cursor-pointer w-fit dark:text-slate-100"
+            className="mb-1 cursor-pointer w-fit"
             onClick={onHomeClick}
           >
-            <img src="/logo.png" alt="" className="h-7" />
-            Lactia
+            <img src="/logo.png" alt="Lactia" className="h-10 dark:invert dark:hue-rotate-180" />
           </h1>
           <p className="text-sm text-slate-500 mb-3 dark:text-slate-400">
             Medication guidance for breastfeeding mothers
