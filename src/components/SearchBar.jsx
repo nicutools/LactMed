@@ -6,14 +6,11 @@ export default function SearchBar({ query, onChange, onHomeClick }) {
       <div className="flex items-start justify-between">
         <div>
           <h1
-            className="mb-1 cursor-pointer w-fit"
+            className="mb-3 cursor-pointer w-fit"
             onClick={onHomeClick}
           >
             <img src="/logo.png" alt="Lactia" className="h-20 dark:invert dark:hue-rotate-180" />
           </h1>
-          <p className="text-sm text-slate-500 mb-3 dark:text-slate-400">
-            Medication guidance for breastfeeding mothers
-          </p>
         </div>
         <ThemeToggle />
       </div>
