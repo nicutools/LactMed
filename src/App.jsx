@@ -18,7 +18,16 @@ function App() {
   useEffect(() => {
     clearTimeout(debounceRef.current);
 
-    if (!query.trim()) {
+    const trimmed = query.trim();
+
+    if (!trimmed) {
+      setResults([]);
+      setError(null);
+      setResolution(null);
+      return;
+    }
+
+    if (trimmed.length < 3) {
       setResults([]);
       setError(null);
       setResolution(null);
@@ -75,9 +84,15 @@ function App() {
           <p className="py-12 text-center text-sm text-red-500">{error}</p>
         )}
 
-        {!loading && !error && query.trim() && results.length === 0 && (
+        {!loading && !error && query.trim().length >= 3 && results.length === 0 && (
           <p className="py-12 text-center text-sm text-slate-400">
             No results found. Try a drug or brand name (e.g. "Ibuprofen").
+          </p>
+        )}
+
+        {!loading && !error && query.trim().length > 0 && query.trim().length < 3 && (
+          <p className="py-12 text-center text-sm text-slate-400">
+            Type at least 3 characters to search.
           </p>
         )}
 
