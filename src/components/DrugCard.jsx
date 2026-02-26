@@ -54,7 +54,7 @@ export default function DrugCard({ drug }) {
   }
 
   function toggleSection(key) {
-    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+    setOpenSections((prev) => (prev[key] ? {} : { [key]: true }));
     ensureMonograph();
   }
 
