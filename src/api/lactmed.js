@@ -1,27 +1,68 @@
 const EUTILS_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 const API_KEY = import.meta.env.VITE_NCBI_API_KEY;
 
-export async function searchDrugs(query, signal) {
-  if (!query.trim()) return [];
-
-  // Step 1: ESearch — find LactMed book chapter UIDs matching the query
-  const searchTerm = `${query}* AND lactmed[book] AND chapter[type]`;
-  const searchParams = new URLSearchParams({
+async function esearch(query, titleOnly, signal) {
+  const field = titleOnly ? '[title]' : '';
+  const term = `${query}*${field} AND lactmed[book] AND chapter[type]`;
+  const params = new URLSearchParams({
     db: 'books',
-    term: searchTerm,
+    term,
     retmode: 'json',
-    retmax: '20',
+    retmax: '100',
     ...(API_KEY && { api_key: API_KEY }),
   });
+  const res = await fetch(`${EUTILS_BASE}/esearch.fcgi?${params}`, { signal });
+  if (!res.ok) throw new Error(`ESearch error: ${res.status}`);
+  const data = await res.json();
+  return data.esearchresult?.idlist || [];
+}
 
-  const searchRes = await fetch(`${EUTILS_BASE}/esearch.fcgi?${searchParams}`, { signal });
-  if (!searchRes.ok) throw new Error(`ESearch error: ${searchRes.status}`);
+async function espell(query, signal) {
+  const params = new URLSearchParams({
+    db: 'books',
+    term: query,
+    ...(API_KEY && { api_key: API_KEY }),
+  });
+  const res = await fetch(`${EUTILS_BASE}/espell.fcgi?${params}`, { signal });
+  if (!res.ok) return null;
+  const xml = await res.text();
+  const doc = new DOMParser().parseFromString(xml, 'text/xml');
+  const corrected = doc.querySelector('CorrectedQuery')?.textContent;
+  return corrected && corrected.toLowerCase() !== query.toLowerCase() ? corrected : null;
+}
 
-  const searchData = await searchRes.json();
-  const uids = searchData.esearchresult?.idlist || [];
-  if (uids.length === 0) return [];
+export async function searchDrugs(query, signal) {
+  if (!query.trim()) return { results: [], correction: null };
 
-  // Step 2: ELink — map book UIDs to PubMed IDs
+  // Try [title] first for precise results, fall back to broad search
+  // so partial international names (e.g. "parace" → acetaminophen) still work.
+  let uids = await esearch(query, true, signal);
+  if (uids.length === 0) {
+    uids = await esearch(query, false, signal);
+  }
+
+  // If still nothing, try spell correction
+  if (uids.length === 0) {
+    const corrected = await espell(query, signal);
+    if (corrected) {
+      uids = await esearch(corrected, true, signal);
+      if (uids.length === 0) {
+        uids = await esearch(corrected, false, signal);
+      }
+      if (uids.length > 0) {
+        const results = await fetchResults(uids, signal);
+        return { results, correction: corrected };
+      }
+    }
+    return { results: [], correction: null };
+  }
+
+  const results = await fetchResults(uids, signal);
+  return { results, correction: null };
+}
+
+async function fetchResults(uids, signal) {
+  // ELink — map book UIDs to PubMed IDs
   const linkParams = new URLSearchParams({
     dbfrom: 'books',
     db: 'pubmed',
@@ -46,7 +87,7 @@ export async function searchDrugs(query, signal) {
   }
   if (pmids.length === 0) return [];
 
-  // Step 3: EFetch — get full article data from PubMed
+  // EFetch — get full article data from PubMed
   const fetchParams = new URLSearchParams({
     db: 'pubmed',
     retmode: 'xml',
@@ -58,7 +99,7 @@ export async function searchDrugs(query, signal) {
   if (!fetchRes.ok) throw new Error(`EFetch error: ${fetchRes.status}`);
 
   const xml = await fetchRes.text();
-  return parseArticles(xml);
+  return parseArticles(xml).sort((a, b) => a.title.localeCompare(b.title));
 }
 
 function parseArticles(xml) {
