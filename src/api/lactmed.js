@@ -4,7 +4,7 @@ export async function searchDrugs(query, signal) {
   if (!query.trim()) return [];
 
   // Step 1: ESearch — find LactMed book chapter UIDs matching the query
-  const searchTerm = `${query}*[title] AND lactmed[book] AND chapter[type]`;
+  const searchTerm = `${query}* AND lactmed[book] AND chapter[type]`;
   const searchParams = new URLSearchParams({
     db: 'books',
     term: searchTerm,

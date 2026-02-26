@@ -33,10 +33,10 @@ function App() {
       setLoading(true);
       setError(null);
 
-      const brandResult = resolveBrand(query);
-      setResolution(brandResult.resolved ? brandResult : null);
-
       try {
+        const brandResult = await resolveBrand(query, controller.signal);
+        setResolution(brandResult.resolved ? brandResult : null);
+
         const data = await searchDrugs(brandResult.generic, controller.signal);
         setResults(data);
       } catch (err) {
@@ -59,8 +59,9 @@ function App() {
       <main className="mx-auto max-w-lg px-4 py-4">
         {resolution && (
           <BrandBadge
-            originalBrand={resolution.originalBrand}
+            original={resolution.original}
             generic={resolution.generic}
+            type={resolution.type}
           />
         )}
 
