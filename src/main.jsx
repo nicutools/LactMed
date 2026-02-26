@@ -8,3 +8,37 @@ createRoot(document.getElementById('root')).render(
     <App />
   </StrictMode>,
 )
+
+// Register service worker for PWA support
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(() => {
+      // Warm cache with common drug searches in the background
+      // Skip if user arrived with a deep link (they're already searching)
+      if (!new URLSearchParams(window.location.search).get('drug')) {
+        setTimeout(() => warmCommonDrugs(), 5000);
+      }
+    }).catch((err) => {
+      console.warn('SW registration failed:', err);
+    });
+  });
+}
+
+async function warmCommonDrugs() {
+  const drugs = [
+    'Ibuprofen', 'Acetaminophen', 'Sertraline', 'Amoxicillin',
+    'Fluoxetine', 'Metformin', 'Omeprazole', 'Cetirizine',
+  ];
+
+  const { searchDrugs } = await import('./api/lactmed.js');
+
+  for (const drug of drugs) {
+    try {
+      await searchDrugs(drug);
+    } catch {
+      // Silently skip failures
+    }
+    // 1s gap between drugs to respect NCBI rate limits (3 req/sec)
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+}
