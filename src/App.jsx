@@ -163,7 +163,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div className="min-h-screen bg-zinc-50 dark:bg-slate-950">
       <SearchBar query={query} onChange={(val) => {
         setQuery(val);
         if (!val.trim()) clearDrugParam(false);
@@ -183,29 +183,29 @@ function App() {
         )}
 
         {correction && (
-          <p className="mb-3 text-sm text-zinc-500">
-            Showing results for <span className="font-semibold text-sky-900">{correction}</span>
+          <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
+            Showing results for <span className="font-semibold text-sky-900 dark:text-sky-100">{correction}</span>
           </p>
         )}
 
         {loading && (
-          <p className="py-12 text-center text-sm text-zinc-400">
+          <p className="py-12 text-center text-sm text-zinc-400 dark:text-zinc-500">
             Searching...
           </p>
         )}
 
         {error && (
-          <p className="py-12 text-center text-sm text-red-500">{error}</p>
+          <p className="py-12 text-center text-sm text-red-500 dark:text-red-400">{error}</p>
         )}
 
         {!loading && !error && searched && results.length === 0 && (
-          <p className="py-12 text-center text-sm text-zinc-400">
+          <p className="py-12 text-center text-sm text-zinc-400 dark:text-zinc-500">
             No results found. Try a drug or brand name (e.g. "Ibuprofen").
           </p>
         )}
 
         {!loading && !error && query.trim().length > 0 && query.trim().length < 3 && (
-          <p className="py-12 text-center text-sm text-zinc-400">
+          <p className="py-12 text-center text-sm text-zinc-400 dark:text-zinc-500">
             Type at least 3 characters to search.
           </p>
         )}
@@ -223,14 +223,14 @@ function App() {
 
         {results.length > 1 && selectedIndex === null && (
           <div className="flex flex-col gap-1">
-            <p className="mb-2 text-xs text-zinc-400">
+            <p className="mb-2 text-xs text-zinc-400 dark:text-zinc-500">
               {results.length} results — tap to view
             </p>
             {results.map((drug, i) => (
               <button
                 key={drug.title || i}
                 onClick={() => handleResultTap(i)}
-                className="w-full rounded-xl bg-white px-4 py-3 text-left text-sm font-medium text-sky-900 shadow-sm active:bg-zinc-50"
+                className="w-full rounded-xl bg-white px-4 py-3 text-left text-sm font-medium text-sky-900 shadow-sm active:bg-zinc-50 dark:bg-zinc-900 dark:text-sky-100 dark:shadow-none dark:active:bg-zinc-800"
               >
                 {drug.title}
               </button>
@@ -242,7 +242,7 @@ function App() {
           <div>
             <button
               onClick={handleBackToList}
-              className="mb-3 flex items-center gap-1 text-sm font-medium text-sky-600 active:text-sky-800"
+              className="mb-3 flex items-center gap-1 text-sm font-medium text-sky-600 active:text-sky-800 dark:text-sky-400 dark:active:text-sky-300"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />

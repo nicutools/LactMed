@@ -7,7 +7,7 @@ export default function BrandBadge({ original, generic, type }) {
       : 'is also known as';
 
   return (
-    <div className="mb-3 rounded-xl bg-sky-100 border border-sky-200 px-4 py-3 text-sm text-sky-900">
+    <div className="mb-3 rounded-xl bg-sky-100 border border-sky-200 px-4 py-3 text-sm text-sky-900 dark:bg-sky-900/30 dark:border-sky-800 dark:text-sky-200">
       <span className="font-semibold">{original}</span> {label}{' '}
       <span className="font-semibold">{generic}</span>
     </div>
