@@ -18,25 +18,20 @@ export default function DrugCard({ drug }) {
       })
     : null;
 
-  const [expanded, setExpanded] = useState(false);
   const [monograph, setMonograph] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [openSections, setOpenSections] = useState({});
   const abortRef = useRef(null);
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
     return () => abortRef.current?.abort();
   }, []);
 
-  async function handleToggle() {
-    if (expanded) {
-      setExpanded(false);
-      return;
-    }
-
-    setExpanded(true);
-
-    if (monograph) return;
+  async function ensureMonograph() {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
 
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -50,11 +45,17 @@ export default function DrugCard({ drug }) {
       setMonograph(data);
     } catch (err) {
       if (err.name !== 'AbortError') {
+        fetchedRef.current = false;
         setError('Unable to load monograph details.');
       }
     } finally {
       setLoading(false);
     }
+  }
+
+  function toggleSection(key) {
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+    ensureMonograph();
   }
 
   return (
@@ -80,51 +81,50 @@ export default function DrugCard({ drug }) {
       )}
 
       {drug.bookshelfId && (
-        <button
-          onClick={handleToggle}
-          className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl bg-slate-50 py-2.5 text-sm font-medium text-slate-600 active:bg-slate-100"
-        >
-          <svg
-            className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-          </svg>
-          {expanded ? 'Hide details' : 'Show details'}
-        </button>
-      )}
+        <div className="mt-4 divide-y divide-slate-100 rounded-xl border border-slate-200">
+          {SECTIONS.map(({ key, label }) => {
+            const isOpen = openSections[key];
+            const content = monograph?.[key];
+            const hasContent = monograph && !content;
 
-      {expanded && (
-        <div className="mt-4 space-y-4">
-          {loading && (
-            <p className="py-4 text-center text-sm text-slate-400">Loading details...</p>
-          )}
-
-          {error && (
-            <p className="py-4 text-center text-sm text-red-500">{error}</p>
-          )}
-
-          {monograph && SECTIONS.map(({ key, label }) =>
-            monograph[key] ? (
+            return (
               <div key={key}>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <button
+                  onClick={() => toggleSection(key)}
+                  className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-slate-700 active:bg-slate-50"
+                >
                   {label}
-                </h3>
-                <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-slate-700">
-                  {monograph[key]}
-                </p>
+                  <svg
+                    className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </button>
+                {isOpen && (
+                  <div className="px-4 pb-3">
+                    {loading && (
+                      <p className="py-2 text-sm text-slate-400">Loading...</p>
+                    )}
+                    {error && (
+                      <p className="py-2 text-sm text-red-500">{error}</p>
+                    )}
+                    {content && (
+                      <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600">
+                        {content}
+                      </p>
+                    )}
+                    {hasContent && !loading && !error && (
+                      <p className="py-2 text-sm text-slate-400">No data available.</p>
+                    )}
+                  </div>
+                )}
               </div>
-            ) : null,
-          )}
-
-          {monograph && !SECTIONS.some(({ key }) => monograph[key]) && (
-            <p className="py-4 text-center text-sm text-slate-400">
-              No detailed sections available for this drug.
-            </p>
-          )}
+            );
+          })}
         </div>
       )}
 
