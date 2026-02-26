@@ -1,4 +1,4 @@
-# CLAUDE.md — Project: LactCheck
+# CLAUDE.md — Project: Lactia
 
 ## 1. Vision & Strategy
 **Purpose:** A high-performance, mobile-first web interface for the NLM LactMed® database.
