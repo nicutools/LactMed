@@ -128,17 +128,7 @@ export default function DrugCard({ drug }) {
         </div>
       )}
 
-      <div className="mt-4 flex items-center justify-between">
-        {drug.bookshelfId && (
-          <a
-            href={`https://www.ncbi.nlm.nih.gov/books/${drug.bookshelfId}/`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-medium text-teal-600 hover:text-teal-800 dark:text-teal-400 dark:hover:text-teal-300"
-          >
-            View full monograph &rarr;
-          </a>
-        )}
+      <div className="mt-4 flex justify-end">
         <ShareButton drugTitle={drug.title} />
       </div>
     </article>
