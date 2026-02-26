@@ -14,7 +14,7 @@ export default function HomePage({ onDrugSelect }) {
     <div className="py-8">
       <div className="text-center">
         <h1 className="text-xl font-bold tracking-tight text-sky-900 dark:text-slate-100">
-          Evidence-based guidance for breastfeeding
+          Evidence-based medication guidance for breastfeeding
         </h1>
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
           Search any drug or brand name for evidence-based information from the NIH LactMed database.
