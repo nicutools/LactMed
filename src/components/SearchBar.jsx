@@ -12,7 +12,7 @@ export default function SearchBar({ query, onChange, onHomeClick }) {
             Lactia
           </h1>
           <p className="text-sm text-slate-500 mb-3 dark:text-slate-400">
-            Drug safety info for breastfeeding
+            Medication guidance for breastfeeding mothers
           </p>
         </div>
         <ThemeToggle />

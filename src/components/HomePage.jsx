@@ -14,10 +14,10 @@ export default function HomePage({ onDrugSelect }) {
     <div className="py-8">
       <div className="text-center">
         <h1 className="text-xl font-bold tracking-tight text-sky-900 dark:text-slate-100">
-          Medication safety during breastfeeding
+          Evidence-based guidance for breastfeeding
         </h1>
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-          Search any drug or brand name for evidence-based lactation safety information from the NIH LactMed database.
+          Search any drug or brand name for evidence-based information from the NIH LactMed database.
         </p>
       </div>
 
@@ -41,7 +41,7 @@ export default function HomePage({ onDrugSelect }) {
       <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
         <h2 className="text-sm font-bold tracking-tight text-sky-900 dark:text-slate-100">About Lactia</h2>
         <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-          Lactia helps parents and healthcare providers quickly look up medication safety information for breastfeeding. Data comes from{' '}
+          Lactia helps parents and healthcare providers quickly look up medication information for breastfeeding mothers. Data comes from{' '}
           <a
             href="https://www.ncbi.nlm.nih.gov/books/NBK501922/"
             target="_blank"
