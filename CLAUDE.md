@@ -16,7 +16,12 @@
 - **Monograph Proxy:** Cloudflare Pages Function (`/api/monograph`) fetches full monograph HTML from NCBI Bookshelf, extracts subsections with `HTMLRewriter`, returns JSON
 - **Spell Check:** NCBI ESpell API — auto-corrects misspelled drug names when search returns zero results
 - **State Management:** Standard React useState (transitioning to TanStack Query later)
-- **Deploy:** `npm run build && npx wrangler pages deploy dist`
+- **Version:** 1.0.0
+- **Deploy:** `npm run build && npx wrangler pages deploy dist --project-name lactia`
+- **Local dev with functions:** `npm run build && npx wrangler pages dev dist`
+- **Repo:** https://github.com/nicutools/LactMed
+- **Live:** https://lactia.nicutools.org (custom domain) / https://lactia.pages.dev
+- **Analytics:** Google Analytics GA4 — `G-070WW9RLH0` (gtag in `index.html`)
 
 ## 3. Core Architecture (Lite)
 
@@ -80,5 +85,6 @@ When ready to scale, we will introduce:
 - **Mobile First:** All layouts must be optimized for single-hand use on an iPhone.
 - **Safety:** Display the `last_updated` field prominently on every drug card.
 - **Disclaimer:** The NLM liability disclaimer must be visible in the footer of all results.
-- **Deploy:** `npm run build && npx wrangler pages deploy dist` (Cloudflare Pages).
+- **Deploy:** `npm run build && npx wrangler pages deploy dist --project-name lactia` (Cloudflare Pages).
 - **Local dev with functions:** `npm run build && npx wrangler pages dev dist`
+- **Bump SW cache:** Increment `CACHE_VERSION` in `public/sw.js` on every deploy to avoid stale cache issues.
