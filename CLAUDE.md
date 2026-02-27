@@ -7,6 +7,8 @@
 
 **Development Philosophy:** Phase 1 (Lite) focuses on a lightweight, fast experience hosted on Cloudflare Pages. Phase 2 (Full) introduces a local mirror for offline PWA capabilities.
 
+**Sister Project:** Matria (`~/Desktop/Matria`) covers **pregnancy** drug safety using the OpenFDA API. Same stack and design system but a separate codebase with its own CLAUDE.md. Do not confuse the two — Lactia uses NCBI LactMed (breastfeeding), Matria uses OpenFDA labels (pregnancy).
+
 ## 2. Technology Stack (Phase 1: Lite)
 - **Frontend:** React (Vite) + Tailwind CSS
 - **Hosting:** Cloudflare Pages (static assets + Pages Functions)
