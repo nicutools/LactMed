@@ -1,7 +1,7 @@
 // Lactia Service Worker
 // Bump CACHE_VERSION to invalidate all caches on deploy.
 
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const STATIC_CACHE = `lactia-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `lactia-runtime-${CACHE_VERSION}`;
 
@@ -11,6 +11,8 @@ const PRECACHE_URLS = [
   '/icon-192.png',
   '/icon-512.png',
   '/logo.png',
+  '/lactia.png',
+  '/apple-touch-icon.png',
 ];
 
 // ---- INSTALL: precache app shell ----
