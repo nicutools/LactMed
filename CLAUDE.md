@@ -40,7 +40,7 @@
 ### B. Monograph Subsections (Cloudflare Pages Function)
 DrugCard has a "Show details" button that lazy-loads full monograph subsections on first tap:
 1. **Endpoint:** `/api/monograph?id=NBK500986` — Cloudflare Pages Function at `functions/api/monograph.js`
-2. **Server-side:** Fetches `ncbi.nlm.nih.gov/books/{id}/`, uses `HTMLRewriter` (Cloudflare's built-in streaming HTML parser) to extract 4 subsections by CSS attribute selectors:
+2. **Server-side:** Fetches `ncbi.nlm.nih.gov/books/{id}/`, uses `HTMLRewriter` (Cloudflare's built-in streaming HTML parser) to extract 4 subsections by CSS attribute selectors. Post-processes text with `decodeEntities()` (HTML entity decoding) and `insertSubHeadings()` (line breaks before "Maternal Levels." / "Infant Levels."):
    - `div[id$=".Drug_Levels"]` → drugLevels
    - `div[id$=".Effects_in_Breastfed_Infants"]` → effectsInfant
    - `div[id*=".Effects_on_Lactation"]` → effectsLactation (contains-match handles truncation variant)
@@ -74,10 +74,14 @@ When ready to scale, we will introduce:
 - `src/api/lactmed.js` — ESearch (title→broad→espell fallback), ELink, EFetch pipeline
 - `src/api/monograph.js` — Client-side fetch wrapper for monograph proxy
 - `src/api/brandResolver.js` — Async brand + international name resolution
-- `src/components/DrugCard.jsx` — Drug result card with expandable monograph subsections
+- `src/components/DrugCard.jsx` — Drug result card with expandable monograph subsections + external links
+- `src/components/FormattedText.jsx` — Structured text rendering: paragraphs, bold sub-headings, bullet lists, word-break for URLs
+- `src/components/ExternalLinks.jsx` — MotherToBaby (US) breastfeeding fact sheets (verified slugs) + Matria pregnancy cross-link
 - `src/components/BrandBadge.jsx` — Shows "is a brand name for" or "is also known as"
+- `src/components/SearchBar.jsx` — Sticky frosted glass header with Lactia logo + search input + sister site nav (Matria, nicutools)
 - `src/data/brandToGeneric.json` — Static brand-to-generic mappings (~400 entries)
-- `functions/api/monograph.js` — Cloudflare Pages Function (HTMLRewriter proxy)
+- `src/data/motherToBabyLinks.json` — Verified MotherToBaby fact sheet slugs (~320)
+- `functions/api/monograph.js` — Cloudflare Pages Function (HTMLRewriter proxy + entity decoding + sub-heading insertion)
 - `src/App.jsx` — Main app: search state, compact result list, selection, correction banner
 
 ## 7. Development Rules for Claude Code
