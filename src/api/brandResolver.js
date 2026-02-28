@@ -24,7 +24,7 @@ export async function resolveBrand(query, signal) {
         if (propRes.ok) {
           const propData = await propRes.json();
           const usName = propData.properties?.name;
-          if (usName && usName.toLowerCase() !== key) {
+          if (usName && usName.toLowerCase() !== key && !usName.includes(',')) {
             return { resolved: true, type: 'international', generic: usName, original: trimmed };
           }
         }
