@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { fetchMonograph } from '../api/monograph';
 import ShareButton from './ShareButton';
+import ExternalLinks from './ExternalLinks';
+import FormattedText from './FormattedText';
 
 const SECTIONS = [
   { key: 'drugLevels', label: 'Drug Levels' },
@@ -113,9 +115,7 @@ export default function DrugCard({ drug }) {
                       <p className="py-2 text-sm text-red-500 dark:text-red-400">{error}</p>
                     )}
                     {content && (
-                      <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                        {content}
-                      </p>
+                      <FormattedText text={content} className="text-sm leading-relaxed text-slate-600 dark:text-slate-400" />
                     )}
                     {hasContent && !loading && !error && (
                       <p className="py-2 text-sm text-slate-400 dark:text-slate-500">No data available.</p>
@@ -127,6 +127,8 @@ export default function DrugCard({ drug }) {
           })}
         </div>
       )}
+
+      <ExternalLinks drugName={drug.title} />
 
       <div className="mt-4 flex justify-end">
         <ShareButton drugTitle={drug.title} />

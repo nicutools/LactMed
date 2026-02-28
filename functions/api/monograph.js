@@ -46,11 +46,11 @@ export async function onRequest(context) {
       if (currentParagraph.length) {
         paragraphs.push(currentParagraph.join(''));
       }
-      result[key] =
-        paragraphs
+      const joined = paragraphs
           .map((p) => p.trim())
           .filter(Boolean)
-          .join('\n\n') || null;
+          .join('\n\n');
+      result[key] = joined ? postProcess(joined) : null;
       activeSection = null;
     });
   }
@@ -97,4 +97,36 @@ export async function onRequest(context) {
       'Cache-Control': 'public, max-age=86400',
     },
   });
+}
+
+// Known LactMed sub-headings that appear inline within paragraphs.
+// Insert line breaks so the client can render them as bold headings.
+const SUB_HEADINGS = [
+  /Maternal Levels\./,
+  /Infant Levels\./,
+];
+
+function postProcess(text) {
+  let result = decodeEntities(text);
+
+  for (const re of SUB_HEADINGS) {
+    // Put sub-heading on its own line if it's not already
+    result = result.replace(
+      new RegExp(`(${re.source})\\s*`, 'g'),
+      '\n\n$1\n',
+    );
+  }
+
+  return result.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+function decodeEntities(text) {
+  return text
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
 }
