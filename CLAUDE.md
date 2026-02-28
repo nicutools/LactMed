@@ -109,6 +109,7 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 
 - NCBI rate-limited to 3 req/sec without API key. Cache warming uses 1s delays between drugs.
 - RxNorm doesn't resolve brand names — only international generics. Local JSON handles brands.
+- RxNorm results containing commas are rejected (e.g., "insulin" → "insulin, regular, human") — these are formulation names, not clean generic mappings, and fail LactMed search.
 - NCBI Bookshelf section IDs: `[id$=".Section_Name"]` for exact match, `[id*=".Effects_on_Lactation"]` for truncation variant.
 - `HTMLRewriter` text handlers receive all descendant text (a `<p>` handler captures text from child `<i>`, `<a>`, etc.).
 - Vite warns about `lactmed.js` being both statically and dynamically imported — harmless, cache warming still works.
