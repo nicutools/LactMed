@@ -72,6 +72,7 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 - **Cache warming:** `main.jsx` prefetches 8 common drug searches 5s after first visit with 1s gaps (NCBI rate limit: 3 req/sec without API key).
 - **State:** All search state lives in `App.jsx` via `useState`. No global state library.
 - **Deep links:** `?drug=Ibuprofen` URL param — auto-selects exact match from results.
+- **Recent searches:** Last 10 viewed drugs stored in `localStorage` (`lactia-recent-searches`). Displayed as teal pills on HomePage above common searches. Single-result saves are debounced 1s (avoids mid-type captures); multi-result taps save immediately. `HomePage.jsx` exports `getRecentSearches()` and `addRecentSearch(name)`.
 
 ### Data Schema (NCBI E-utilities → UI)
 
@@ -91,6 +92,7 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 - `src/components/FormattedText.jsx` — Structured text rendering: paragraphs, bold sub-headings, bullet lists, word-break for URLs
 - `src/components/ExternalLinks.jsx` — MotherToBaby (US) breastfeeding fact sheets (verified slugs) + Matria pregnancy cross-link
 - `src/components/BrandBadge.jsx` — Shows "is a brand name for" or "is also known as"
+- `src/components/HomePage.jsx` — Home page: recent searches (localStorage, teal pills) + common searches + about section
 - `src/components/SearchBar.jsx` — Sticky frosted glass header with Lactia logo + search input + sister site nav (Matria, nicutools)
 - `src/data/brandToGeneric.json` — Static brand-to-generic mappings (~400 entries)
 - `src/data/motherToBabyLinks.json` — Verified MotherToBaby fact sheet slugs (~320)
