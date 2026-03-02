@@ -1,7 +1,7 @@
 // Lactia Service Worker
 // Bump CACHE_VERSION to invalidate all caches on deploy.
 
-const CACHE_VERSION = 'v10';
+const CACHE_VERSION = 'v11';
 const STATIC_CACHE = `lactia-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `lactia-runtime-${CACHE_VERSION}`;
 
@@ -44,12 +44,8 @@ self.addEventListener('fetch', (event) => {
 
   if (request.method !== 'GET') return;
 
-  // Network-first for API routes (Pages Function + NCBI + RxNorm)
+  // Network-first for API routes (Pages Functions + RxNorm)
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(networkFirst(request, RUNTIME_CACHE));
-    return;
-  }
-  if (url.hostname === 'eutils.ncbi.nlm.nih.gov') {
     event.respondWith(networkFirst(request, RUNTIME_CACHE));
     return;
   }
