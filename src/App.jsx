@@ -3,7 +3,7 @@ import SearchBar from './components/SearchBar';
 import DrugCard from './components/DrugCard';
 import BrandBadge from './components/BrandBadge';
 import Disclaimer from './components/Disclaimer';
-import HomePage from './components/HomePage';
+import HomePage, { addRecentSearch } from './components/HomePage';
 import { searchDrugs } from './api/lactmed';
 import { resolveBrand } from './api/brandResolver';
 
@@ -44,11 +44,13 @@ function App() {
   const [correction, setCorrection] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const debounceRef = useRef(null);
+  const recentDebounceRef = useRef(null);
   const abortRef = useRef(null);
   const isDeepLink = useRef(!!getUrlDrug());
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
+    clearTimeout(recentDebounceRef.current);
 
     const trimmed = query.trim();
 
@@ -106,6 +108,7 @@ function App() {
         // Single result: update URL without creating a history entry
         if (data.length === 1) {
           replaceDrug(data[0].title);
+          recentDebounceRef.current = setTimeout(() => addRecentSearch(data[0].title), 1000);
         }
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -155,6 +158,7 @@ function App() {
   function handleResultTap(i) {
     setSelectedIndex(i);
     pushDrug(results[i].title);
+    addRecentSearch(results[i].title);
   }
 
   function handleBackToList() {
