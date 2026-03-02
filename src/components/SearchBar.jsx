@@ -11,7 +11,7 @@ export default function SearchBar({ query, onChange, onHomeClick }) {
           >
             Home
           </button>
-          <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">v1.0.0</span>
+          <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">v1.0.1</span>
         </div>
         <div className="flex items-center gap-2">
           <a href="https://matria.nicutools.org" target="_blank" rel="noopener noreferrer"
