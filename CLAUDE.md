@@ -27,20 +27,25 @@ There are no tests configured.
 - **Frontend:** React 19 (Vite 7) + Tailwind CSS 4 (via `@tailwindcss/vite`)
 - **Hosting:** Cloudflare Pages (static assets + Pages Functions)
 - **Data:** Live fetch from NCBI E-utilities API — no local database
-- **Server function:** `functions/api/monograph.js` — Cloudflare Pages Function using `HTMLRewriter`
+- **Server functions:** Cloudflare Pages Functions at `functions/api/` — `search.js` (NCBI search proxy) + `monograph.js` (HTMLRewriter monograph proxy)
 - **PWA:** Hand-rolled service worker at `public/sw.js` (no vite-plugin-pwa — avoids CF Pages conflicts)
 
 ## Architecture
 
-### Search Workflow (NCBI E-utilities)
+### Search Workflow (Server-Side Proxy)
 
 1. **User Input:** User enters a drug or brand name (e.g., "Ibuprofen" or "Nurofen").
-2. **Search Strategy (3-tier with fallback):**
+2. **Client:** `src/api/lactmed.js` makes a single `GET /api/search?q={query}` request to the CF Pages Function.
+3. **Server (`functions/api/search.js`):** Runs the full NCBI pipeline server-side (datacenter-to-datacenter, faster than client-side):
    - **Tier 1 — Title search:** `{query}*[title] AND lactmed[book] AND chapter[type]` with `retmax=100`. Returns only drugs whose name matches (precise, alphabetical). Handles most searches.
    - **Tier 2 — Broad search:** If title search returns 0 results, retries without `[title]`. Catches partial international names (e.g., "parace" finds Acetaminophen via body text mention of "paracetamol").
    - **Tier 3 — Spell correction:** If both searches return 0, calls NCBI ESpell API (`espell.fcgi`). If a correction is found (e.g., "fluoxatine" → "fluoxetine"), re-searches with the corrected term. UI shows "Showing results for **fluoxetine**".
-3. **Pipeline:** ESearch → ELink (books→pubmed) → EFetch (XML). Results sorted alphabetically by title.
-4. **Display:**
+   - **Pipeline:** ESearch → ELink (books→pubmed) → EFetch (XML). Results sorted alphabetically by title.
+   - **XML parsing:** Regex-based (no `DOMParser` in CF Workers). Extracts `ArticleTitle`, `AbstractText`, `ContributionDate`, `ArticleId[bookaccession]`.
+   - **Caching:** `Cache-Control: public, max-age=3600` (1h edge cache). Repeat searches served instantly from CF edge.
+   - **API key:** Optionally reads `NCBI_API_KEY` from CF environment.
+4. **Response:** `{ results: [...], correction: null|string }`
+5. **Display:**
    - **Multiple results:** Compact title list ("9 results — tap to view"). User taps a drug name to see full card. "All results" button to return to list.
    - **Single result:** Full DrugCard shown directly.
    - Mandatory NLM disclaimer in footer.
@@ -69,7 +74,7 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 
 - **Debounced search:** 350ms debounce in `App.jsx` (0ms for deep links). Uses `AbortController` for request cancellation.
 - **Accordion:** Only one monograph section open at a time in DrugCard.
-- **Cache warming:** `main.jsx` prefetches 8 common drug searches 5s after first visit with 1s gaps (NCBI rate limit: 3 req/sec without API key).
+- **Cache warming:** `main.jsx` prefetches 8 common drug searches 5s after first visit with 1s gaps. Hits `/api/search` which populates CF edge cache.
 - **State:** All search state lives in `App.jsx` via `useState`. No global state library.
 - **Deep links:** `?drug=Ibuprofen` URL param — auto-selects exact match from results.
 - **Recent searches:** Last 10 viewed drugs stored in `localStorage` (`lactia-recent-searches`). Displayed as teal pills on HomePage above common searches. Single-result saves are debounced 1s (avoids mid-type captures); multi-result taps save immediately. `HomePage.jsx` exports `getRecentSearches()` and `addRecentSearch(name)`.
@@ -85,7 +90,7 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 
 ## Key Files
 
-- `src/api/lactmed.js` — ESearch (title→broad→espell fallback), ELink, EFetch pipeline
+- `src/api/lactmed.js` — Thin client wrapper; single fetch to `/api/search` server proxy
 - `src/api/monograph.js` — Client-side fetch wrapper for monograph proxy
 - `src/api/brandResolver.js` — Async brand + international name resolution
 - `src/components/DrugCard.jsx` — Drug result card with expandable monograph subsections + external links
@@ -96,6 +101,7 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 - `src/components/SearchBar.jsx` — Sticky frosted glass header with Lactia logo + search input + sister site nav (Matria, nicutools)
 - `src/data/brandToGeneric.json` — Static brand-to-generic mappings (~400 entries)
 - `src/data/motherToBabyLinks.json` — Verified MotherToBaby fact sheet slugs (~320)
+- `functions/api/search.js` — Cloudflare Pages Function (server-side NCBI search proxy, regex XML parsing, 1h edge cache)
 - `functions/api/monograph.js` — Cloudflare Pages Function (HTMLRewriter proxy + entity decoding + sub-heading insertion)
 - `src/App.jsx` — Main app: search state, compact result list, selection, correction banner
 
@@ -109,7 +115,7 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 
 ## Gotchas
 
-- NCBI rate-limited to 3 req/sec without API key. Cache warming uses 1s delays between drugs.
+- NCBI rate-limited to 3 req/sec without API key. Server-side proxy makes multiple NCBI calls per search; cache warming uses 1s delays between drugs.
 - RxNorm doesn't resolve brand names — only international generics. Local JSON handles brands.
 - RxNorm results containing commas are rejected (e.g., "insulin" → "insulin, regular, human") — these are formulation names, not clean generic mappings, and fail LactMed search.
 - NCBI Bookshelf section IDs: `[id$=".Section_Name"]` for exact match, `[id*=".Effects_on_Lactation"]` for truncation variant.
