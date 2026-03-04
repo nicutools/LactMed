@@ -141,7 +141,9 @@ function App() {
           setError('Unable to reach the LactMed database. Please try again.');
         }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }, delay);
 
