@@ -34,6 +34,31 @@ function clearDrugParam(push) {
   }
 }
 
+const SEARCH_STEPS = [
+  'Searching database…',
+  'Matching drug records…',
+  'Loading summaries…',
+];
+
+function SearchProgress() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (step < SEARCH_STEPS.length - 1) {
+      const id = setTimeout(() => setStep(step + 1), 700);
+      return () => clearTimeout(id);
+    }
+  }, [step]);
+
+  return (
+    <div className="py-12 text-center">
+      <p className="text-sm text-slate-400 transition-opacity duration-300 dark:text-slate-500">
+        {SEARCH_STEPS[step]}
+      </p>
+    </div>
+  );
+}
+
 function App() {
   const [query, setQuery] = useState(() => getUrlDrug());
   const [results, setResults] = useState([]);
@@ -192,11 +217,7 @@ function App() {
           </p>
         )}
 
-        {loading && (
-          <p className="py-12 text-center text-sm text-slate-400 dark:text-slate-500">
-            Searching...
-          </p>
-        )}
+        {loading && <SearchProgress />}
 
         {error && (
           <p className="py-12 text-center text-sm text-red-500 dark:text-red-400">{error}</p>
