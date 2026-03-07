@@ -76,6 +76,7 @@ function App() {
   useEffect(() => {
     clearTimeout(debounceRef.current);
     clearTimeout(recentDebounceRef.current);
+    abortRef.current?.abort();
 
     const trimmed = query.trim();
 
