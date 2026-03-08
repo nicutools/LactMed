@@ -57,6 +57,15 @@ function jsonResponse(data) {
 
 // --- NCBI E-utilities helpers ---
 
+async function ncbiFetch(url) {
+  let res = await fetch(url);
+  if (res.status === 429) {
+    await new Promise((r) => setTimeout(r, 350));
+    res = await fetch(url);
+  }
+  return res;
+}
+
 async function esearch(query, titleOnly, apiKey) {
   const field = titleOnly ? '[title]' : '';
   const term = `${query}*${field} AND lactmed[book] AND chapter[type]`;
@@ -67,7 +76,7 @@ async function esearch(query, titleOnly, apiKey) {
     retmax: '100',
     ...(apiKey && { api_key: apiKey }),
   });
-  const res = await fetch(`${EUTILS_BASE}/esearch.fcgi?${params}`);
+  const res = await ncbiFetch(`${EUTILS_BASE}/esearch.fcgi?${params}`);
   if (!res.ok) throw new Error(`ESearch error: ${res.status}`);
   const data = await res.json();
   return data.esearchresult?.idlist || [];
@@ -79,7 +88,7 @@ async function espell(query, apiKey) {
     term: query,
     ...(apiKey && { api_key: apiKey }),
   });
-  const res = await fetch(`${EUTILS_BASE}/espell.fcgi?${params}`);
+  const res = await ncbiFetch(`${EUTILS_BASE}/espell.fcgi?${params}`);
   if (!res.ok) return null;
   const xml = await res.text();
   const match = xml.match(/<CorrectedQuery>([^<]+)<\/CorrectedQuery>/);
@@ -98,7 +107,7 @@ async function fetchResults(uids, apiKey) {
   });
   uids.forEach((id) => linkParams.append('id', id));
 
-  const linkRes = await fetch(`${EUTILS_BASE}/elink.fcgi?${linkParams}`);
+  const linkRes = await ncbiFetch(`${EUTILS_BASE}/elink.fcgi?${linkParams}`);
   if (!linkRes.ok) throw new Error(`ELink error: ${linkRes.status}`);
 
   const linkData = await linkRes.json();
@@ -122,7 +131,7 @@ async function fetchResults(uids, apiKey) {
   });
   pmids.forEach((id) => fetchParams.append('id', id));
 
-  const fetchRes = await fetch(`${EUTILS_BASE}/efetch.fcgi?${fetchParams}`);
+  const fetchRes = await ncbiFetch(`${EUTILS_BASE}/efetch.fcgi?${fetchParams}`);
   if (!fetchRes.ok) throw new Error(`EFetch error: ${fetchRes.status}`);
 
   const xml = await fetchRes.text();
