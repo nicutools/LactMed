@@ -137,7 +137,7 @@ function App() {
           recentDebounceRef.current = setTimeout(() => addRecentSearch(data[0].title), 1000);
         }
       } catch (err) {
-        if (err.name !== 'AbortError') {
+        if (err.name !== 'AbortError' && !controller.signal.aborted) {
           console.error('Search error:', err);
           setError('Unable to reach the LactMed database. Please try again.');
         }
