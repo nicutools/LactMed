@@ -117,6 +117,7 @@ function App() {
         setResolution(brandResult.resolved ? brandResult : null);
 
         const { results: data, correction: corrected } = await searchDrugs(brandResult.generic, controller.signal);
+        setError(null);
         setResults(data);
         setCorrection(corrected);
         setSearched(true);
