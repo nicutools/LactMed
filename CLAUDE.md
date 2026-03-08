@@ -43,7 +43,8 @@ There are no tests configured.
    - **Pipeline:** ESearch → ELink (books→pubmed) → EFetch (XML). Results sorted alphabetically by title.
    - **XML parsing:** Regex-based (no `DOMParser` in CF Workers). Extracts `ArticleTitle`, `AbstractText`, `ContributionDate`, `ArticleId[bookaccession]`.
    - **Caching:** `Cache-Control: public, max-age=3600` (1h edge cache). Repeat searches served instantly from CF edge.
-   - **API key:** Optionally reads `NCBI_API_KEY` from CF environment.
+   - **Rate-limit handling:** `ncbiFetch()` helper retries once after 350ms on HTTP 429 (NCBI rate limit).
+   - **API key:** Reads `NCBI_API_KEY` from CF environment (set as CF Pages secret). Raises NCBI rate limit from 3 to 10 req/sec. Required — spell-correction searches make up to 7 NCBI calls per request.
 4. **Response:** `{ results: [...], correction: null|string }`
 5. **Display:**
    - **Multiple results:** Compact title list ("9 results — tap to view"). User taps a drug name to see full card. "All results" button to return to list.
@@ -78,6 +79,7 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 - **State:** All search state lives in `App.jsx` via `useState`. No global state library.
 - **Deep links:** `?drug=Ibuprofen` URL param — auto-selects exact match from results.
 - **Recent searches:** Last 10 viewed drugs stored in `localStorage` (`lactia-recent-searches`). Displayed as teal pills on HomePage above common searches. Single-result saves are debounced 1s (avoids mid-type captures); multi-result taps save immediately. `HomePage.jsx` exports `getRecentSearches()` and `addRecentSearch(name)`.
+- **Search analytics (KV):** Successful searches (results > 0) are counted in Cloudflare KV. The `SEARCH_COUNTS` KV namespace is bound to the Pages project via CF dashboard (Settings → Bindings). `search.js` increments counts via fire-and-forget `context.waitUntil()`. View counts in CF dashboard under Workers & Pages → KV. Free tier: 1,000 writes/day.
 
 ### Data Schema (NCBI E-utilities → UI)
 
@@ -115,7 +117,7 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 
 ## Gotchas
 
-- NCBI rate-limited to 3 req/sec without API key. Server-side proxy makes multiple NCBI calls per search; cache warming uses 1s delays between drugs.
+- NCBI rate-limited to 3 req/sec without API key, 10 req/sec with key. `NCBI_API_KEY` must be set as a CF Pages secret. Spell-correction path makes up to 7 NCBI calls per search — will 429 without the key. `ncbiFetch()` retries once on 429. Cache warming uses 1s delays between drugs.
 - RxNorm doesn't resolve brand names — only international generics. Local JSON handles brands.
 - RxNorm results containing commas are rejected (e.g., "insulin" → "insulin, regular, human") — these are formulation names, not clean generic mappings, and fail LactMed search.
 - NCBI Bookshelf section IDs: `[id$=".Section_Name"]` for exact match, `[id*=".Effects_on_Lactation"]` for truncation variant.
@@ -128,3 +130,4 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 - **Live:** https://lactia.nicutools.org / https://lactia.pages.dev
 - **Repo:** https://github.com/nicutools/LactMed
 - **Analytics:** GA4 `G-070WW9RLH0`
+- **Search counts:** CF KV namespace `SEARCH_COUNTS` (id: `ef519c9d599344d0bca4c05f6ad7953f`)
