@@ -9,12 +9,12 @@ export default function FormattedText({ text, className = '' }) {
         const lines = para.split('\n').filter(Boolean);
 
         // Check if all lines are bullet points
-        const bulletLines = lines.filter(l => /^[•\-]\s/.test(l));
+        const bulletLines = lines.filter(l => /^[•-]\s/.test(l));
         if (bulletLines.length > 0 && bulletLines.length === lines.length) {
           return (
             <ul key={i} className="mt-2 list-disc space-y-1 pl-5 first:mt-0">
               {lines.map((line, j) => (
-                <li key={j}>{line.replace(/^[•\-]\s*/, '')}</li>
+                <li key={j}>{line.replace(/^[•-]\s*/, '')}</li>
               ))}
             </ul>
           );
@@ -25,7 +25,7 @@ export default function FormattedText({ text, className = '' }) {
           <p key={i} className="mt-2 first:mt-0">
             {lines.map((line, j) => {
               // Sub-heading: short line, doesn't end with typical sentence patterns
-              const isHeading = line.length < 80 && !/[,;]$/.test(line) && !/^[•\-]\s/.test(line)
+              const isHeading = line.length < 80 && !/[,;]$/.test(line) && !/^[•-]\s/.test(line)
                 && !/\.\s/.test(line);  // no mid-line periods (i.e. it's a label like "Maternal Levels.")
 
               return (

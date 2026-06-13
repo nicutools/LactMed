@@ -1,7 +1,9 @@
 // Lactia Service Worker
-// Bump CACHE_VERSION to invalidate all caches on deploy.
+// CACHE_VERSION is stamped with a unique value by the build (vite.config.js),
+// so every deploy invalidates stale caches automatically. The value below is
+// only used during local dev.
 
-const CACHE_VERSION = 'v19';
+const CACHE_VERSION = 'dev';
 const STATIC_CACHE = `lactia-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `lactia-runtime-${CACHE_VERSION}`;
 

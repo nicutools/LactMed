@@ -26,4 +26,17 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    // Cloudflare Pages Functions run in the Workers runtime
+    files: ['functions/**/*.js'],
+    languageOptions: {
+      globals: { HTMLRewriter: 'readonly' },
+    },
+  },
+  {
+    files: ['scripts/**/*.{js,mjs}', 'vite.config.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ])

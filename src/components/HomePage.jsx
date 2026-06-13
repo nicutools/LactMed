@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getRecentSearches, clearRecentSearches } from '../lib/recentSearches';
 
 const POPULAR_DRUGS = [
   'Ibuprofen',
@@ -11,29 +12,11 @@ const POPULAR_DRUGS = [
   'Cetirizine',
 ];
 
-const STORAGE_KEY = 'lactia-recent-searches';
-
-export function getRecentSearches() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  } catch {
-    return [];
-  }
-}
-
-export function addRecentSearch(name) {
-  const recent = getRecentSearches().filter(
-    (d) => d.toLowerCase() !== name.toLowerCase()
-  );
-  recent.unshift(name);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(recent.slice(0, 10)));
-}
-
 export default function HomePage({ onDrugSelect }) {
   const [recent, setRecent] = useState(getRecentSearches);
 
   function clearRecent() {
-    localStorage.removeItem(STORAGE_KEY);
+    clearRecentSearches();
     setRecent([]);
   }
 

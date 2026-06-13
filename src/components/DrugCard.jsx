@@ -93,6 +93,8 @@ export default function DrugCard({ drug }) {
               <div key={key}>
                 <button
                   onClick={() => toggleSection(key)}
+                  aria-expanded={!!isOpen}
+                  aria-controls={isOpen ? `monograph-${key}` : undefined}
                   className="flex min-h-11 w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-slate-700 active:bg-slate-50 dark:text-slate-300 dark:active:bg-slate-800"
                 >
                   {label}
@@ -107,7 +109,7 @@ export default function DrugCard({ drug }) {
                   </svg>
                 </button>
                 {isOpen && (
-                  <div className="px-4 pb-3">
+                  <div id={`monograph-${key}`} className="px-4 pb-3">
                     {loading && (
                       <p className="py-2 text-sm text-slate-400 dark:text-slate-500">Loading...</p>
                     )}

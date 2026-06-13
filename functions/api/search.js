@@ -12,7 +12,14 @@ export async function onRequest(context) {
   }
 
   const apiKey = context.env?.NCBI_API_KEY || null;
-  const q = query.trim();
+  const q = sanitizeQuery(query);
+
+  if (!q) {
+    return Response.json(
+      { error: 'Query contains no searchable characters.' },
+      { status: 400 },
+    );
+  }
 
   try {
     // Tier 1: title search
@@ -51,8 +58,20 @@ export async function onRequest(context) {
 
 function jsonResponse(data) {
   return Response.json(data, {
-    headers: { 'Cache-Control': 'public, max-age=3600' },
+    headers: {
+      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+    },
   });
+}
+
+// Strip characters with special meaning in NCBI term syntax (brackets,
+// quotes, parens, booleans are left as plain words) so user input can't
+// distort the query. Exported for tests.
+export function sanitizeQuery(raw) {
+  return raw
+    .replace(/[^\p{L}\p{N}\s.,'-]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 // --- NCBI E-utilities helpers ---
@@ -138,7 +157,8 @@ async function fetchResults(uids, apiKey) {
   return parseArticles(xml).sort((a, b) => a.title.localeCompare(b.title));
 }
 
-function parseArticles(xml) {
+// Exported for tests.
+export function parseArticles(xml) {
   const results = [];
   // Split on PubmedBookArticle boundaries
   const articles = xml.split(/<PubmedBookArticle[\s>]/);

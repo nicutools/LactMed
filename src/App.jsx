@@ -3,7 +3,8 @@ import SearchBar from './components/SearchBar';
 import DrugCard from './components/DrugCard';
 import BrandBadge from './components/BrandBadge';
 import Disclaimer from './components/Disclaimer';
-import HomePage, { addRecentSearch } from './components/HomePage';
+import HomePage from './components/HomePage';
+import { addRecentSearch } from './lib/recentSearches';
 import { searchDrugs } from './api/lactmed';
 import { resolveBrand } from './api/brandResolver';
 
@@ -55,13 +56,15 @@ function SearchProgress() {
   }, [step]);
 
   return (
-    <div className="py-12 text-center">
+    <div className="py-12 text-center" role="status" aria-live="polite">
       <p className="text-sm text-slate-400 transition-opacity duration-300 dark:text-slate-500">
         {SEARCH_STEPS[step]}
       </p>
     </div>
   );
 }
+
+const DEFAULT_TITLE = document.title;
 
 function App() {
   const [query, setQuery] = useState(() => getUrlDrug());
@@ -158,6 +161,15 @@ function App() {
 
     return () => clearTimeout(debounceRef.current);
   }, [query]);
+
+  // Keep the document title in sync with the viewed drug (tabs, shares, history)
+  useEffect(() => {
+    const drug =
+      results.length === 1 ? results[0]
+      : selectedIndex !== null ? results[selectedIndex]
+      : null;
+    document.title = drug ? `${drug.title} — Lactia` : DEFAULT_TITLE;
+  }, [results, selectedIndex]);
 
   // Handle browser back/forward
   useEffect(() => {

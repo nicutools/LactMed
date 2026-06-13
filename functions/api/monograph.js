@@ -94,7 +94,7 @@ export async function onRequest(context) {
 
   return Response.json(result, {
     headers: {
-      'Cache-Control': 'public, max-age=86400',
+      'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
     },
   });
 }
@@ -106,7 +106,8 @@ const SUB_HEADINGS = [
   /Infant Levels\./,
 ];
 
-function postProcess(text) {
+// Exported for tests.
+export function postProcess(text) {
   let result = decodeEntities(text);
 
   for (const re of SUB_HEADINGS) {
@@ -117,7 +118,10 @@ function postProcess(text) {
     );
   }
 
-  return result.replace(/\n{3,}/g, '\n\n').trim();
+  return result
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function decodeEntities(text) {
