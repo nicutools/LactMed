@@ -1,7 +1,7 @@
 // Lactia Service Worker
 // Bump CACHE_VERSION to invalidate all caches on deploy.
 
-const CACHE_VERSION = 'v18';
+const CACHE_VERSION = 'v19';
 const STATIC_CACHE = `lactia-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `lactia-runtime-${CACHE_VERSION}`;
 
@@ -43,6 +43,9 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   if (request.method !== 'GET') return;
+
+  // Skip analytics-only endpoint (fire-and-forget, no caching needed)
+  if (url.pathname === '/api/count') return;
 
   // Network-first for API routes (Pages Functions + RxNorm)
   if (url.pathname.startsWith('/api/')) {

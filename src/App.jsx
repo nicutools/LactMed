@@ -23,6 +23,10 @@ function replaceDrug(title) {
   history.replaceState(null, '', url);
 }
 
+function logDrugView(drugName) {
+  fetch(`/api/count?q=${encodeURIComponent(drugName)}`).catch(() => {});
+}
+
 function clearDrugParam(push) {
   const url = new URL(window.location.href);
   url.searchParams.delete('drug');
@@ -135,7 +139,10 @@ function App() {
         // Single result: update URL without creating a history entry
         if (data.length === 1) {
           replaceDrug(data[0].title);
-          recentDebounceRef.current = setTimeout(() => addRecentSearch(data[0].title), 1000);
+          recentDebounceRef.current = setTimeout(() => {
+            addRecentSearch(data[0].title);
+            logDrugView(data[0].title);
+          }, 1000);
         }
       } catch (err) {
         if (err.name !== 'AbortError' && !controller.signal.aborted) {
@@ -188,6 +195,7 @@ function App() {
     setSelectedIndex(i);
     pushDrug(results[i].title);
     addRecentSearch(results[i].title);
+    logDrugView(results[i].title);
   }
 
   function handleBackToList() {

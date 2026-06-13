@@ -27,7 +27,7 @@ There are no tests configured.
 - **Frontend:** React 19 (Vite 7) + Tailwind CSS 4 (via `@tailwindcss/vite`)
 - **Hosting:** Cloudflare Pages (static assets + Pages Functions)
 - **Data:** Live fetch from NCBI E-utilities API — no local database
-- **Server functions:** Cloudflare Pages Functions at `functions/api/` — `search.js` (NCBI search proxy) + `monograph.js` (HTMLRewriter monograph proxy)
+- **Server functions:** Cloudflare Pages Functions at `functions/api/` — `search.js` (NCBI search proxy), `monograph.js` (HTMLRewriter monograph proxy), `count.js` (KV search analytics)
 - **PWA:** Hand-rolled service worker at `public/sw.js` (no vite-plugin-pwa — avoids CF Pages conflicts)
 
 ## Architecture
@@ -79,7 +79,7 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 - **State:** All search state lives in `App.jsx` via `useState`. No global state library.
 - **Deep links:** `?drug=Ibuprofen` URL param — auto-selects exact match from results.
 - **Recent searches:** Last 10 viewed drugs stored in `localStorage` (`lactia-recent-searches`). Displayed as teal pills on HomePage above common searches. Single-result saves are debounced 1s (avoids mid-type captures); multi-result taps save immediately. `HomePage.jsx` exports `getRecentSearches()` and `addRecentSearch(name)`.
-- **Search analytics (KV):** Successful searches (results > 0) are counted in Cloudflare KV. The `SEARCH_COUNTS` KV namespace is bound to the Pages project via CF dashboard (Settings → Bindings). `search.js` increments counts via fire-and-forget `context.waitUntil()`. View counts in CF dashboard under Workers & Pages → KV. Free tier: 1,000 writes/day.
+- **Search analytics (KV):** Drug views are counted in Cloudflare KV via a dedicated `/api/count?q={drugName}` endpoint (`functions/api/count.js`). Client calls it only when a user actually views a drug (multi-result tap or single-result auto-display with 1s debounce), logging canonical drug titles — not raw query fragments. The `SEARCH_COUNTS` KV namespace is bound via CF dashboard (Settings → Bindings). Fire-and-forget via `context.waitUntil()`. Free tier: 1,000 writes/day. Service worker skips this endpoint (no caching needed).
 
 ### Data Schema (NCBI E-utilities → UI)
 
@@ -105,7 +105,8 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 - `src/data/motherToBabyLinks.json` — Verified MotherToBaby fact sheet slugs (~320)
 - `functions/api/search.js` — Cloudflare Pages Function (server-side NCBI search proxy, regex XML parsing, 1h edge cache)
 - `functions/api/monograph.js` — Cloudflare Pages Function (HTMLRewriter proxy + entity decoding + sub-heading insertion)
-- `src/App.jsx` — Main app: search state, compact result list, selection, correction banner
+- `functions/api/count.js` — Cloudflare Pages Function (lightweight KV analytics — logs canonical drug titles on view)
+- `src/App.jsx` — Main app: search state, compact result list, selection, correction banner, `logDrugView()` analytics
 
 ## Development Rules
 

@@ -14,8 +14,6 @@ export async function onRequest(context) {
   const apiKey = context.env?.NCBI_API_KEY || null;
   const q = query.trim();
 
-  const kv = context.env?.SEARCH_COUNTS || null;
-
   try {
     // Tier 1: title search
     let uids = await esearch(q, true, apiKey);
@@ -35,7 +33,6 @@ export async function onRequest(context) {
         }
         if (uids.length > 0) {
           const results = await fetchResults(uids, apiKey);
-          if (kv) context.waitUntil(incrementCount(kv, q));
           return jsonResponse({ results, correction: corrected });
         }
       }
@@ -43,7 +40,6 @@ export async function onRequest(context) {
     }
 
     const results = await fetchResults(uids, apiKey);
-    if (kv) context.waitUntil(incrementCount(kv, q));
     return jsonResponse({ results, correction: null });
   } catch (err) {
     return Response.json(
@@ -57,14 +53,6 @@ function jsonResponse(data) {
   return Response.json(data, {
     headers: { 'Cache-Control': 'public, max-age=3600' },
   });
-}
-
-// --- Search count tracking (Cloudflare KV) ---
-
-async function incrementCount(kv, term) {
-  const key = term.toLowerCase();
-  const count = parseInt(await kv.get(key) || '0');
-  await kv.put(key, String(count + 1));
 }
 
 // --- NCBI E-utilities helpers ---
