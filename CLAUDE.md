@@ -78,7 +78,7 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 - **Cache warming:** `main.jsx` prefetches 8 common drug searches 5s after first visit with 1s gaps. Hits `/api/search` which populates CF edge cache.
 - **State:** All search state lives in `App.jsx` via `useState`. No global state library.
 - **Deep links:** `?drug=Ibuprofen` URL param — auto-selects exact match from results.
-- **Recent searches:** Last 10 viewed drugs stored in `localStorage` (`lactia-recent-searches`). Displayed as teal pills on HomePage above common searches. Single-result saves are debounced 1s (avoids mid-type captures); multi-result taps save immediately. `HomePage.jsx` exports `getRecentSearches()` and `addRecentSearch(name)`.
+- **Recent searches:** Last 10 viewed drugs stored in `localStorage` (`lactia-recent-searches`). Displayed as teal pills on HomePage above common searches. Single-result saves are debounced 1s (avoids mid-type captures); multi-result taps save immediately. `src/lib/recentSearches.js` exports `getRecentSearches()`, `addRecentSearch(name)`, and `clearRecentSearches()`.
 - **Search analytics (KV):** Drug views are counted in Cloudflare KV via a dedicated `/api/count?q={drugName}` endpoint (`functions/api/count.js`). Client calls it only when a user actually views a drug (multi-result tap or single-result auto-display with 1s debounce), logging canonical drug titles — not raw query fragments. The `SEARCH_COUNTS` KV namespace is bound via CF dashboard (Settings → Bindings). Fire-and-forget via `context.waitUntil()`. Free tier: 1,000 writes/day. Service worker skips this endpoint (no caching needed).
 
 ### Data Schema (NCBI E-utilities → UI)
