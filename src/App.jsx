@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import SearchBar from './components/SearchBar';
 import DrugCard from './components/DrugCard';
 import BrandBadge from './components/BrandBadge';
@@ -7,6 +7,7 @@ import HomePage from './components/HomePage';
 import { addRecentSearch } from './lib/recentSearches';
 import { searchDrugs } from './api/lactmed';
 import { resolveBrand } from './api/brandResolver';
+import drugTitles from './data/drugTitles.json';
 
 function getUrlDrug() {
   return new URLSearchParams(window.location.search).get('drug') || '';
@@ -162,6 +163,24 @@ function App() {
     return () => clearTimeout(debounceRef.current);
   }, [query]);
 
+  // Instant local suggestions from the bundled LactMed title index.
+  // Prefix matches rank above substring matches; exact match is excluded
+  // (it's already being searched).
+  const suggestions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    const starts = [];
+    const contains = [];
+    for (const title of drugTitles) {
+      const lower = title.toLowerCase();
+      if (lower === q) continue;
+      if (lower.startsWith(q)) starts.push(title);
+      else if (contains.length < 8 && lower.includes(q)) contains.push(title);
+      if (starts.length >= 8) break;
+    }
+    return [...starts, ...contains].slice(0, 8);
+  }, [query]);
+
   // Keep the document title in sync with the viewed drug (tabs, shares, history)
   useEffect(() => {
     const drug =
@@ -241,6 +260,23 @@ function App() {
           </p>
         )}
 
+        {suggestions.length > 0 && results.length === 0 && (
+          <nav aria-label="Suggestions" className="mb-4 flex flex-col gap-1">
+            {suggestions.map((name) => (
+              <button
+                key={name}
+                onClick={() => handleDrugSelect(name)}
+                className="flex min-h-11 w-full items-center gap-2 rounded-2xl bg-white px-4 py-3 text-left text-sm font-medium text-slate-600 shadow-sm active:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:shadow-none dark:active:bg-slate-800"
+              >
+                <svg className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                {name}
+              </button>
+            ))}
+          </nav>
+        )}
+
         {loading && <SearchProgress />}
 
         {error && (
@@ -253,7 +289,7 @@ function App() {
           </p>
         )}
 
-        {!loading && !error && query.trim().length > 0 && query.trim().length < 3 && (
+        {!loading && !error && suggestions.length === 0 && query.trim().length > 0 && query.trim().length < 3 && (
           <p className="py-12 text-center text-sm text-slate-400 dark:text-slate-500">
             Type at least 3 characters to search.
           </p>

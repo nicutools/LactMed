@@ -1,0 +1,35 @@
+name: Refresh drug title index
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Monthly — LactMed adds/revises chapters on a roughly monthly cycle
+    - cron: '17 4 2 * *'
+  push:
+    paths:
+      - scripts/fetch-titles.mjs
+      - .github/workflows/refresh-titles.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/fetch-titles.mjs
+      - name: Commit updated index
+        run: |
+          if git diff --quiet src/data/drugTitles.json; then
+            echo "Title index unchanged"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add src/data/drugTitles.json
+            git commit -m "Refresh LactMed drug title index [skip ci]"
+            git push
+          fi
