@@ -15,11 +15,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Dev server (no functions) | `npm run dev` |
 | Build | `npm run build` |
 | Lint | `npm run lint` |
+| Test | `npm run test` (Vitest — unit tests in `test/`) |
 | Local dev with CF Functions | `npm run build && npx wrangler pages dev dist` |
 | Deploy | `npm run build && npx wrangler pages deploy dist --project-name lactia` |
 | Refresh drug title index | `npm run fetch-titles` (writes `src/data/drugTitles.json`; also runs monthly via GitHub Actions) |
 
-There are no tests configured.
+Tests: Vitest, in `test/` (currently `search.test.js` + `monograph.test.js`). Run with `npm run test`.
 
 **On every deploy:** increment `CACHE_VERSION` in `public/sw.js` to invalidate stale caches.
 
