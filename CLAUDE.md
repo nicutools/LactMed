@@ -107,7 +107,7 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 - `src/data/motherToBabyLinks.json` — Verified MotherToBaby fact sheet slugs (~320)
 - `src/data/drugTitles.json` — Bundled LactMed chapter titles (~1,920) for autocomplete + build-time sitemap. **Not safety data** — monographs are fetched live via the proxy, so this can never make safety info stale.
 - `scripts/fetch-titles.mjs` — Fetches all LactMed chapter titles from NCBI E-utilities → `drugTitles.json`. Fails loudly by design (throws on 0 results; refuses to write a <1,000-title index), so it can't silently pin stale data.
-- `.github/workflows/refresh-titles.yml` — Monthly (2nd, 04:17 UTC) + on push to the fetch script: runs `fetch-titles`, commits `drugTitles.json` **only when it changes**.
+- `.github/workflows/refresh-titles.yml` — Monthly (2nd, 04:17 UTC) + on push to the fetch script: runs `fetch-titles`, and **only when `drugTitles.json` changes** commits it, builds, and auto-deploys to Cloudflare Pages. Needs repo secrets `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`.
 - `.github/workflows/keepalive.yml` — Empty `[skip ci]` commit on the 1st & 22nd of each month to prevent GitHub's 60-day scheduled-workflow auto-disable (see Gotchas). Self-sustaining; no third-party actions.
 - `functions/api/search.js` — Cloudflare Pages Function (server-side NCBI search proxy, regex XML parsing, 1h edge cache)
 - `functions/api/monograph.js` — Cloudflare Pages Function (HTMLRewriter proxy + entity decoding + sub-heading insertion)
