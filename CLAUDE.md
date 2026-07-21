@@ -17,6 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Lint | `npm run lint` |
 | Local dev with CF Functions | `npm run build && npx wrangler pages dev dist` |
 | Deploy | `npm run build && npx wrangler pages deploy dist --project-name lactia` |
+| Refresh drug title index | `npm run fetch-titles` (writes `src/data/drugTitles.json`; also runs monthly via GitHub Actions) |
 
 There are no tests configured.
 
@@ -103,6 +104,10 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 - `src/components/SearchBar.jsx` — Sticky frosted glass header with Lactia logo + search input + sister site nav (Matria, nicutools)
 - `src/data/brandToGeneric.json` — Static brand-to-generic mappings (~400 entries)
 - `src/data/motherToBabyLinks.json` — Verified MotherToBaby fact sheet slugs (~320)
+- `src/data/drugTitles.json` — Bundled LactMed chapter titles (~1,920) for autocomplete + build-time sitemap. **Not safety data** — monographs are fetched live via the proxy, so this can never make safety info stale.
+- `scripts/fetch-titles.mjs` — Fetches all LactMed chapter titles from NCBI E-utilities → `drugTitles.json`. Fails loudly by design (throws on 0 results; refuses to write a <1,000-title index), so it can't silently pin stale data.
+- `.github/workflows/refresh-titles.yml` — Monthly (2nd, 04:17 UTC) + on push to the fetch script: runs `fetch-titles`, commits `drugTitles.json` **only when it changes**.
+- `.github/workflows/keepalive.yml` — Empty `[skip ci]` commit on the 1st & 22nd of each month to prevent GitHub's 60-day scheduled-workflow auto-disable (see Gotchas). Self-sustaining; no third-party actions.
 - `functions/api/search.js` — Cloudflare Pages Function (server-side NCBI search proxy, regex XML parsing, 1h edge cache)
 - `functions/api/monograph.js` — Cloudflare Pages Function (HTMLRewriter proxy + entity decoding + sub-heading insertion)
 - `functions/api/count.js` — Cloudflare Pages Function (lightweight KV analytics — logs canonical drug titles on view)
@@ -125,6 +130,7 @@ DrugCard has a "Show details" button that lazy-loads full monograph subsections 
 - `HTMLRewriter` text handlers receive all descendant text (a `<p>` handler captures text from child `<i>`, `<a>`, etc.).
 - Vite warns about `lactmed.js` being both statically and dynamically imported — harmless, cache warming still works.
 - For local dev **with** CF Pages Functions, you must use `wrangler pages dev` (not plain `npm run dev`).
+- **GitHub 60-day auto-disable:** Scheduled workflows are auto-disabled after 60 days of *repository inactivity* (no commits — scheduled runs don't count). `refresh-titles` commits only when titles change, so a quiet stretch could disable it and silently stop refreshes. `keepalive.yml` pushes an empty commit twice monthly to reset the clock. If a "workflow disabled" email still arrives, re-enable with `gh workflow enable <id> -R nicutools/LactMed` (find the id via `gh workflow list --all -R nicutools/LactMed`).
 
 ## Links
 
