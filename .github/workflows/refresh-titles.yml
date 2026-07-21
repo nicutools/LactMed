@@ -2,6 +2,11 @@ name: Refresh drug title index
 
 on:
   workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Rebuild and deploy even if the title index is unchanged'
+        type: boolean
+        default: false
   schedule:
     # Monthly — LactMed adds/revises chapters on a roughly monthly cycle
     - cron: '17 4 2 * *'
@@ -53,11 +58,11 @@ jobs:
           git push
 
       - name: Build
-        if: steps.changes.outputs.changed == 'true'
+        if: steps.changes.outputs.changed == 'true' || github.event.inputs.force_deploy == 'true'
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
-        if: steps.changes.outputs.changed == 'true'
+        if: steps.changes.outputs.changed == 'true' || github.event.inputs.force_deploy == 'true'
         run: npx wrangler pages deploy dist --project-name lactia
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
