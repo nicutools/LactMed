@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { fetchMonograph } from '../api/monograph';
+import { formatIsoDate } from '../lib/formatDate';
 import ShareButton from './ShareButton';
 import ExternalLinks from './ExternalLinks';
 import FormattedText from './FormattedText';
@@ -12,13 +13,9 @@ const SECTIONS = [
 ];
 
 export default function DrugCard({ drug }) {
-  const updated = drug.lastUpdated
-    ? new Date(drug.lastUpdated).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      })
-    : null;
+  // NIH's own revision date for this monograph. Absent rather than guessed if
+  // upstream gives us nothing usable.
+  const revised = formatIsoDate(drug.lastUpdated);
 
   const [monograph, setMonograph] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -66,9 +63,9 @@ export default function DrugCard({ drug }) {
         <h2 className="text-lg font-bold tracking-tight text-sky-900 dark:text-slate-100">
           {drug.title}
         </h2>
-        {updated && (
+        {revised && (
           <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-            Updated {updated}
+            Revised {revised}
           </span>
         )}
       </div>

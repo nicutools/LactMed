@@ -13,6 +13,7 @@ import { writeFileSync } from 'node:fs';
 const EUTILS = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 const API_KEY = process.env.NCBI_API_KEY || '';
 const OUT = 'src/data/drugTitles.json';
+const META_OUT = 'src/data/titlesMeta.json';
 const CHUNK = 400;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -70,3 +71,16 @@ if (unique.length < 1000) {
 }
 writeFileSync(OUT, JSON.stringify(unique, null, 2) + '\n');
 console.log(`Wrote ${unique.length} titles to ${OUT}`);
+
+// Written to a sibling file rather than wrapped around the array above,
+// so drugTitles.json stays a bare array and its two consumers (the App's
+// autocomplete and the sitemap builder in vite.config.js) are untouched.
+//
+// Only reached on success — every failure path throws before this line, so
+// this date can only ever mean "we reached NCBI and got a full index".
+const checked = new Date().toISOString().slice(0, 10);
+writeFileSync(
+  META_OUT,
+  JSON.stringify({ checked, count: unique.length }, null, 2) + '\n',
+);
+console.log(`Wrote index metadata to ${META_OUT} (checked ${checked})`);

@@ -169,16 +169,15 @@ export function parseArticles(xml) {
     const title = extractTag(chunk, 'ArticleTitle') || '';
     const summary = extractTag(chunk, 'AbstractText') || '';
 
-    // Parse ContributionDate
+    // Parse ContributionDate — NIH's own revision date for this monograph.
     let lastUpdated = null;
     const dateBlock = chunk.match(/<ContributionDate>([\s\S]*?)<\/ContributionDate>/);
     if (dateBlock) {
-      const y = extractTag(dateBlock[1], 'Year');
-      const m = extractTag(dateBlock[1], 'Month');
-      const d = extractTag(dateBlock[1], 'Day');
-      if (y && m && d) {
-        lastUpdated = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-      }
+      lastUpdated = toIsoDate(
+        extractTag(dateBlock[1], 'Year'),
+        extractTag(dateBlock[1], 'Month'),
+        extractTag(dateBlock[1], 'Day'),
+      );
     }
 
     // Extract bookaccession ID
@@ -190,6 +189,48 @@ export function parseArticles(xml) {
   }
 
   return results;
+}
+
+const MONTH_NAMES = {
+  jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+  jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+};
+
+// Builds an ISO YYYY-MM-DD date from PubMed's separate Year/Month/Day tags.
+//
+// PubMed is not consistent about <Month>: most records use a number, but some
+// use a name ("Apr", "April"). The previous code did `m.padStart(2, '0')`
+// unconditionally, which turned "Apr" into "2026-Apr-15" — a string that then
+// rendered as "Invalid Date" on the drug card. Anything that isn't a real
+// calendar date returns null, so the card shows no date rather than a wrong one.
+//
+// Exported for tests.
+export function toIsoDate(year, month, day) {
+  if (!year || !month || !day) return null;
+
+  const y = Number(year);
+  if (!Number.isInteger(y) || y < 1900 || y > 2200) return null;
+
+  const rawMonth = String(month).trim();
+  const m = /^\d+$/.test(rawMonth)
+    ? Number(rawMonth)
+    : MONTH_NAMES[rawMonth.slice(0, 3).toLowerCase()];
+  if (!Number.isInteger(m) || m < 1 || m > 12) return null;
+
+  const d = Number(String(day).trim());
+  if (!Number.isInteger(d) || d < 1 || d > 31) return null;
+
+  // Reject dates that don't round-trip, e.g. 31 February.
+  const probe = new Date(Date.UTC(y, m - 1, d));
+  if (
+    probe.getUTCFullYear() !== y ||
+    probe.getUTCMonth() !== m - 1 ||
+    probe.getUTCDate() !== d
+  ) {
+    return null;
+  }
+
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
 function extractTag(xml, tag) {
