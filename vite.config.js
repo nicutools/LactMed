@@ -38,6 +38,42 @@ function lactiaBuildArtifacts() {
         console.log(`sw.js cache version stamped: ${version}`)
       }
 
+      // Machine-readable statement of how current this deployment's bundled
+      // data is, read nightly by the analytics dashboard. Generated from the
+      // data actually in the bundle and served from the deployed site, so it
+      // reports what users really get rather than what CI believed it shipped.
+      const meta = JSON.parse(readFileSync('src/data/titlesMeta.json', 'utf8'))
+      const status = {
+        app: 'lactia',
+        built: new Date().toISOString().slice(0, 10),
+        sources: [
+          {
+            id: 'lactmed-titles',
+            label: 'NIH LactMed — searchable drug index',
+            kind: 'bundled',
+            revised: null,
+            synced: meta.checked ?? null,
+            records: meta.count ?? null,
+            // Refreshed monthly; flag if it hasn't synced in ~5 weeks.
+            expectedSyncDays: 35,
+          },
+          {
+            // The text clinicians actually read is fetched per request, so it
+            // has no staleness to report. Stated explicitly so the dashboard
+            // shows "live" rather than an alarming blank.
+            id: 'lactmed-monographs',
+            label: 'NIH LactMed — monograph text',
+            kind: 'live',
+            revised: null,
+            synced: null,
+            records: null,
+            expectedSyncDays: null,
+          },
+        ],
+      }
+      writeFileSync('dist/data-status.json', JSON.stringify(status, null, 2) + '\n')
+      console.log(`data-status.json: drug index synced ${status.sources[0].synced}`)
+
       const titlesPath = 'src/data/drugTitles.json'
       if (existsSync(titlesPath)) {
         const titles = JSON.parse(readFileSync(titlesPath, 'utf8'))
