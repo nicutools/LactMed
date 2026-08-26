@@ -9,6 +9,7 @@ import { searchDrugs } from './api/lactmed';
 import { resolveBrand } from './api/brandResolver';
 import drugTitles from './data/drugTitles.json';
 
+import { recordDrugView } from './usage';
 function getUrlDrug() {
   return new URLSearchParams(window.location.search).get('drug') || '';
 }
@@ -27,6 +28,9 @@ function replaceDrug(title) {
 
 function logDrugView(drugName) {
   fetch(`/api/count?q=${encodeURIComponent(drugName)}`).catch(() => {});
+  // Same event, our own service. drugName is always a resolved result title,
+  // never what someone typed; usage.js slugifies it before it leaves.
+  recordDrugView(drugName);
 }
 
 function clearDrugParam(push) {

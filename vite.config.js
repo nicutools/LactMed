@@ -1,9 +1,12 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
+
+// Exposed to the client so usage counters can report which build produced them.
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 const SITE_ORIGIN = 'https://lactia.nicutools.org'
+const { version } = JSON.parse(readFileSync('./package.json', 'utf-8'))
 
 function escapeXml(s) {
   return s
@@ -59,4 +62,5 @@ function lactiaBuildArtifacts() {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), lactiaBuildArtifacts()],
+  define: { __APP_VERSION__: JSON.stringify(version) },
 })

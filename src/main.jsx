@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { recordAppOpened } from './usage'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -42,3 +43,6 @@ async function warmCommonDrugs() {
     await new Promise((r) => setTimeout(r, 1000));
   }
 }
+
+// Anonymous usage counter — see src/usage.js.
+recordAppOpened()
