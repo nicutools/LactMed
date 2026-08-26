@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   refresh:
@@ -32,38 +33,81 @@ jobs:
         run: npm ci
 
       - name: Refresh title index
+        id: titles
+        continue-on-error: true
         run: node scripts/fetch-titles.mjs
 
+      # titlesMeta.json's `checked` date advances on every successful run, so
+      # this is now effectively "did the refresh succeed", and a quiet month
+      # still rebuilds and deploys. That is deliberate: a synced-on date the
+      # user can see is only honest if the deployed bundle actually carries it.
       - name: Check for changes
         id: changes
         run: |
-          if git diff --quiet src/data/drugTitles.json; then
+          if git diff --quiet src/data/drugTitles.json src/data/titlesMeta.json; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Title index unchanged — nothing to deploy."
+            echo "Nothing changed — nothing to deploy."
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "Title index changed:"
-            git diff --stat src/data/drugTitles.json
+            echo "Changes detected:"
+            git diff --stat src/data/drugTitles.json src/data/titlesMeta.json
           fi
 
       - name: Commit and push updated index
-        if: steps.changes.outputs.changed == 'true'
+        if: steps.titles.outcome == 'success' && steps.changes.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/data/drugTitles.json
+          git add src/data/drugTitles.json src/data/titlesMeta.json
           git commit -m "Refresh LactMed drug title index [skip ci]"
           # Rebase on anything pushed since checkout (e.g. keepalive) before push.
           git pull --rebase --autostash origin main || true
           git push
 
       - name: Build
-        if: steps.changes.outputs.changed == 'true' || github.event.inputs.force_deploy == 'true'
+        if: steps.titles.outcome == 'success' && (steps.changes.outputs.changed == 'true' || github.event.inputs.force_deploy == 'true')
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
-        if: steps.changes.outputs.changed == 'true' || github.event.inputs.force_deploy == 'true'
+        if: steps.titles.outcome == 'success' && (steps.changes.outputs.changed == 'true' || github.event.inputs.force_deploy == 'true')
         run: npx wrangler pages deploy dist --project-name lactia
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # Without this the monthly refresh fails silently: NCBI has an outage, the
+      # run goes red in a tab nobody watches, and the drug list quietly stops
+      # being maintained. Mirrors Matria's tga-update-failed issue.
+      - name: Create GitHub Issue on failure
+        if: always() && steps.titles.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh issue list --label "titles-refresh-failed" --state open --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -n "$EXISTING" ]; then
+            echo "Open issue #$EXISTING already exists — skipping."
+            exit 0
+          fi
+
+          gh label create "titles-refresh-failed" --color "d93f0b" --description "Automated LactMed title index refresh failed" --force
+
+          gh issue create \
+            --title "Monthly update: LactMed drug list couldn't be refreshed" \
+            --label "titles-refresh-failed" \
+            --body "## What happened
+
+          The monthly job that refreshes Lactia's drug name list from the NIH couldn't reach them, so the list was left exactly as it was.
+
+          ## Does this affect the app?
+
+          **Barely.** The list is only used for the search box's autocomplete suggestions. The monograph text clinicians actually read is fetched live from the NIH every time, so **nothing users see has gone out of date.** At worst, a drug added to LactMed in the last month won't appear as a typing suggestion — searching for it by name still works.
+
+          ## How to fix it
+
+          Usually this is a temporary NIH outage and the next monthly run fixes itself. To retry now:
+
+          1. Go to [Run Workflow](https://github.com/nicutools/LactMed/actions/workflows/refresh-titles.yml)
+          2. Click **Run workflow**, then the green **Run workflow** button
+
+          If it fails several months running, NCBI may have changed their API and the script needs updating — ask Claude Code for help."
